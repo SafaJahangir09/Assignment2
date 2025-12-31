@@ -1,262 +1,101 @@
-📘 Assignment 2 – Multi-Tier Web Infrastructure
+# Assignment 2 – Multi-Tier Web Infrastructure
 
-Terraform | AWS | Nginx | Apache
+### Project Overview
+This project demonstrates the deployment of a multi-tier web infrastructure on AWS using Terraform.
+The architecture includes a public Nginx server acting as a reverse proxy and load balancer, forwarding traffic to multiple backend Apache web servers.
 
-📌 Project Overview
+### Architecture Overview
 
-This project implements a multi-tier web infrastructure on AWS using Terraform (Infrastructure as Code).
-The architecture consists of a public Nginx reverse proxy/load balancer and multiple backend Apache web servers deployed in a secure VPC.
+Internet
+   |
+ HTTP (80)
+   |
+Nginx Server (Load Balancer / Reverse Proxy)
+   |
+---------------------------------
+|               |               |
+Web-1           Web-2           Web-3
+Apache          Apache          Apache
+Primary         Primary         Backup
 
-The goal is to demonstrate:
+### Components Description
 
-Modular Terraform design
-
-Secure networking
-
-Load balancing using Nginx
-
-Backend scalability
-
-Clean documentation and reproducibility
-
-🏗 Architecture Overview
-Text-Based Architecture Diagram
-┌─────────────────────────────────────────────────┐
-│                  Internet                       │
-└─────────────────┬───────────────────────────────┘
-                  │
-                  │ HTTP (80)
-                  ▼
-         ┌────────────────────┐
-         │   Nginx Server     │
-         │  (Load Balancer)   │
-         │   - Reverse Proxy  │
-         │   - Traffic Routing│
-         └────────┬───────────┘
-                  │
-      ┌───────────┼───────────┐
-      │           │           │
-      ▼           ▼           ▼
-   ┌─────┐     ┌─────┐     ┌─────┐
-   │Web-1│     │Web-2│     │Web-3│
-   │Apache│    │Apache│    │Apache│
-   └─────┘     └─────┘     └─────┘
-   Primary     Primary     Backup
-
-🧩 Components Description
 1. Networking
-
-Custom VPC
-
-Public subnet for Nginx
-
-Private or controlled subnets for backend servers
-
-Internet Gateway and routing tables
+- Custom VPC
+- Public subnet for Nginx
+- Controlled subnets for backend servers
+- Internet Gateway and routing tables
 
 2. Nginx Server (Frontend)
-
-Acts as reverse proxy & load balancer
-
-Receives public HTTP traffic
-
-Forwards requests to backend Apache servers
+- Reverse proxy
+- Load balancer
+- Receives HTTP traffic on port 80
+- Routes traffic to backend Apache servers
 
 3. Backend Web Servers
-
-Apache (httpd) running on Amazon Linux
-
-Serve static web content
-
-Multiple instances for redundancy
+- Apache (httpd) on Amazon Linux
+- Serve static content
+- Multiple instances for redundancy
 
 4. Security Groups
+- Nginx SG: Allow HTTP (80) and SSH (22)
+- Backend SG: Allow HTTP (80) from Nginx only
 
-Nginx SG: allows HTTP (80) & SSH (22)
+Prerequisites
+- AWS Account
+- Terraform installed
+- SSH key pair
+- Git
 
-Backend SG: allows HTTP (80) from Nginx / VPC
-
-⚙ Prerequisites
 Required Tools
-
-AWS Account
-
-Terraform ≥ 1.x
-
-AWS CLI
-
-Web browser
-
-SSH client (optional)
+- Terraform
+- AWS CLI
+- SSH Client
+- Git
 
 AWS Credentials Setup
-
-Configure AWS CLI:
-
+Configure AWS CLI using:
 aws configure
 
+SSH Key Setup
+Create or use an existing EC2 key pair.
+Place the .pem file in a secure directory.
+
+### Deployment Instructions
+1. Clone the repository
+2. Configure variables.tf
+3. Initialize Terraform
+   terraform init
+4. Validate configuration
+   terraform validate
+5. Apply infrastructure
+   terraform apply
+
+Configuration Guide
+- Backend IPs are updated in Nginx upstream block
+- Nginx configuration located in /etc/nginx/nginx.conf
+
+Testing Procedures
+- Access Nginx public IP in browser
+- Verify load balancing using refresh
+- Test backend servers directly
+
+Architecture Details
+- Public-facing Nginx
+- Private backend servers
+- Controlled inbound and outbound rules
+
+Troubleshooting
+Common Issues:
+- 502 Bad Gateway: Backend not reachable
+- Connection timeout: Security Group or subnet issue
 
-Provide:
-
-AWS Access Key
-
-AWS Secret Key
-
-Region (e.g. us-east-1)
-
-🔐 SSH Key Setup
-
-Terraform generates or uses a provided public key
-
-Key is attached to EC2 instances
-
-EC2 Instance Connect was used for browser-based access (no local SSH dependency)
-
-🚀 Deployment Instructions
-Step-by-Step Guide
-
-Clone / open project directory
-
-Initialize Terraform:
-
-terraform init
-
-
-Validate configuration:
-
-terraform validate
-
-
-Review execution plan:
-
-terraform plan
-
-
-Deploy infrastructure:
-
-terraform apply
-
-
-Confirm with yes.
-
-Variable Configuration
-
-All configurable values are stored in:
-
-variables.tf
-
-terraform.tfvars
-
-Examples:
-
-Instance types
-
-Number of backend servers
-
-CIDR ranges
-
-Environment prefixes
-
-🔧 Configuration Guide
-Updating Backend IPs (Nginx)
-
-Backend servers are defined in the Nginx upstream block:
-
-upstream backend {
-    server 10.0.2.10;
-    server 10.0.2.11;
-}
-
-
-After changes:
-
-sudo nginx -t
-sudo systemctl reload nginx
-
-Nginx Configuration Explanation
-
-upstream backend defines backend pool
-
-proxy_pass forwards client requests
-
-Load balancing is round-robin by default
-
-🧪 Testing Procedures
-Backend Test (on backend EC2)
-curl localhost
-
-
-Expected:
-
-Backend Server - Apache Working
-
-Nginx to Backend Test
-curl http://<BACKEND_IP>
-
-Browser Test
-
-Open:
-
-http://<NGINX_PUBLIC_IP>
-
-
-Expected:
-
-Backend page loads via Nginx
-
-🔐 Architecture Details
-Network Topology
-
-Internet → Nginx (Public Subnet)
-
-Nginx → Backend Servers (Private/Internal)
-
-Security Groups
-
-Principle of least privilege
-
-Backend accessible only through Nginx
-
-Load Balancing Strategy
-
-Nginx reverse proxy
-
-Multiple backend servers
-
-High availability design
-
-🛠 Troubleshooting
-Common Issues & Solutions
-Issue	Solution
-502 Bad Gateway	Backend not running Apache
-Site not reachable	Check security groups
-SSH issues	Use EC2 Instance Connect
-Redirect loop	Wrong backend IP
 Log Locations
+- Nginx: /var/log/nginx/error.log
+- Apache: /var/log/httpd/error_log
 
-Nginx logs:
-
-/var/log/nginx/error.log
-/var/log/nginx/access.log
-
-
-Apache logs:
-
-/var/log/httpd/error_log
-/var/log/httpd/access_log
-
-Useful Debug Commands
-systemctl status nginx
-systemctl status httpd
-curl localhost
-curl <backend-ip>
-
-📦 Deliverables
-
-Terraform source code
-
-Working AWS infrastructure
-
-Screenshots of deployment
-
-This README documentation
+### Debug Commands
+- sudo nginx -t
+- sudo systemctl status nginx
+- sudo systemctl status httpd
+- curl http://localhost
