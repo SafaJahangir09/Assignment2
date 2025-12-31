@@ -6,17 +6,30 @@ The architecture includes a public Nginx server acting as a reverse proxy and lo
 
 ### Architecture Overview
 
-Internet
-   |
- HTTP (80)
-   |
-Nginx Server (Load Balancer / Reverse Proxy)
-   |
----------------------------------
-|               |               |
-Web-1           Web-2           Web-3
-Apache          Apache          Apache
-Primary         Primary         Backup
+┌──────────────────────────────────────────────────────────────┐
+│                          Internet                            │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                               │ HTTP (80) / HTTPS (443)
+                               │
+                               ▼
+                   ┌──────────────────────────┐
+                   │        Nginx Server       │
+                   │     (Load Balancer)      │
+                   │  - Reverse Proxy         │
+                   │  - Traffic Routing       │
+                   │  - SSL Termination       │
+                   └──────────────┬───────────┘
+                                  │
+                  ┌───────────────┼───────────────┐
+                  │               │               │
+                  ▼               ▼               ▼
+           ┌────────────┐  ┌────────────┐  ┌────────────┐
+           │  Web-1     │  │  Web-2     │  │  Web-3     │
+           │  Apache    │  │  Apache    │  │  Apache    │
+           │  Primary   │  │  Primary   │  │  Backup    │
+           └────────────┘  └────────────┘  └────────────┘
+
 
 ### Components Description
 
